@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Organ Donor Blockchain</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f8fb;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    h1, h2 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    form {
+      background: #fff;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      max-width: 400px;
+      width: 100%;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      background: #27ae60;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+    }
+
+    button:hover {
+      background: #219150;
+    }
+
+    #response, #validateMessage {
+      font-weight: bold;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .success {
+      color: #27ae60;
+    }
+
+    .error {
+      color: #c0392b;
+    }
+
+    .block-card {
+      background: white;
+      padding: 20px;
+      margin: 10px 0;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      width: 100%;
+      max-width: 800px;
+      border: 2px solid #d1d8e0;
+    }
+
+    .block-card h3 {
+      margin-top: 0;
+      color: #34495e;
+    }
+
+    .block-card p {
+      margin: 4px 0;
+      line-height: 1.5;
+    }
+
+    #notification {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #dff0d8;
+      border: 1px solid #d6e9c6;
+      padding: 10px;
+      color: #3c763d;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      display: none;
+      cursor: pointer;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+  <div id="notification" onclick="toggleNotification()"></div>
+  <div class="container">
+    <h1>🧬 Organ Donor Blockchain</h1>
+
+    <h2>➕ Add Donor Block</h2>
+    <form id="donorForm">
+      <input type="text" name="blockID" placeholder="Block ID" required>
+      <input type="text" name="donorID" placeholder="Donor ID" required>
+      <input type="text" name="organ" placeholder="Organ" required>
+      <input type="text" name="hospital" placeholder="Hospital" required>
+      <input type="text" name="status" placeholder="Status" required>
+      <button type="submit">Add Donor Block</button>
+    </form>
+
+    <h2>➕ Add Acceptor Block</h2>
+    <form id="acceptorForm">
+      <input type="text" name="blockID" placeholder="Block ID" required>
+      <input type="text" name="acceptorID" placeholder="Acceptor ID" required>
+      <input type="text" name="organ" placeholder="Organ" required>
+      <input type="text" name="hospital" placeholder="Hospital" required>
+      <input type="text" name="status" placeholder="Status" required>
+      <button type="submit">Add Acceptor Block</button>
+    </form>
+
+    <h2>📜 Blockchain</h2>
+    <button onclick="viewChain()">View Blockchain</button>
+    <div id="chainDisplay"></div>
+
+    <h2>✅ Validate Blockchain</h2>
+    <button onclick="validateChain()">Validate</button>
+    <p id="validateMessage"></p>
+
+    <p id="response"></p>
+  </div>
+
+  <script>
+    const donorForm = document.getElementById("donorForm");
+    const acceptorForm = document.getElementById("acceptorForm");
+    const notification = document.getElementById("notification");
+
+    donorForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(donorForm));
+      await sendData("/donor", data);
+    });
+
+    acceptorForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(acceptorForm));
+      await sendData("/acceptor", data);
+    });
+
+    async function sendData(endpoint, data) {
+      const responseEl = document.getElementById("response");
+      responseEl.className = "";
+      try {
+        const res = await fetch("http://localhost:4568" + endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        const msg = await res.text();
+        responseEl.textContent = msg;
+        responseEl.className = res.ok ? "success" : "error";
+        showNotification(msg, res.ok);
+      } catch (err) {
+        const errorMsg = "❌ Failed to fetch: " + err.message;
+        responseEl.textContent = errorMsg;
+        responseEl.className = "error";
+        showNotification(errorMsg, false);
+      }
+    }
+
+    function showNotification(message, success) {
+      notification.textContent = message;
+      notification.style.display = 'block';
+      notification.style.backgroundColor = success ? '#dff0d8' : '#f2dede';
+      notification.style.color = success ? '#3c763d' : '#a94442';
+      notification.style.borderColor = success ? '#d6e9c6' : '#ebccd1';
+
+      setTimeout(() => {
+        notification.style.display = 'none';
+      }, 3000);
+    }
+
+    function toggleNotification() {
+      notification.style.display = (notification.style.display === 'none') ? 'block' : 'none';
+    }
+
+    async function viewChain() {
+      const display = document.getElementById("chainDisplay");
+      display.innerHTML = "⏳ Loading blockchain...";
+      try {
+        const res = await fetch("http://localhost:4568/chain");
+        const json = await res.json();
+        display.innerHTML = json.map((block, index) => `
+          <div class="block-card">
+            <h3>🧱 Block #${index}</h3>
+            ${Object.entries(block).map(([key, value]) => `<p><strong>${key}:</strong> ${typeof value === 'object' ? JSON.stringify(value, null, 2).replaceAll("\n", "<br>").replaceAll("  ", "&nbsp;&nbsp;") : value}</p>`).join('')}
+          </div>
+        `).join('');
+      } catch (err) {
+        display.innerHTML = "❌ Error loading chain";
+      }
+    }
+
+    async function validateChain() {
+      const msg = document.getElementById("validateMessage");
+      msg.className = "";
+      try {
+        const res = await fetch("http://localhost:4568/validate");
+        const text = await res.text();
+        msg.textContent = text;
+        msg.className = res.ok ? "success" : "error";
+      } catch (err) {
+        msg.textContent = "❌ Validation error: " + err.message;
+        msg.className = "error";
+      }
+    }
+  </script>
+</body>
+</html>
